@@ -1,0 +1,39 @@
+name: Build Vape V4.21
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4.2.2
+      with:
+        submodules: recursive # لتنزيل أي مكتبات فرعية إذا وجُدت
+
+    # 1. إعداد بيئة MSVC (Visual Studio Compiler)
+    - name: Set up MSVC Developer Command Prompt
+      uses: ilammy/msvc-dev-cmd@v1.13.0
+
+    # 2. إعداد CMake و Ninja
+    - name: Setup CMake and Ninja
+      uses: lukka/get-cmake@latest
+
+    # 3. تهيئة وبناء مشروع C++
+    - name: Configure and Build DLL
+      run: |
+        cmake -S . -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
+        cmake --build build --config Release
+
+    # 4. استخراج ورفع ملف الـ DLL أو الـ EXE الناتج
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4.4.3
+      with:
+        name: VapeV4-Compiled
+        path: |
+          build/**/*.dll
+          build/**/*.exe

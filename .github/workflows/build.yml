@@ -13,27 +13,25 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4.2.2
       with:
-        submodules: recursive # لتنزيل أي مكتبات فرعية إذا وجُدت
+        submodules: recursive
 
-    # 1. إعداد بيئة MSVC (Visual Studio Compiler)
-    - name: Set up MSVC Developer Command Prompt
-      uses: ilammy/msvc-dev-cmd@v1.13.0
+    # 1. إعداد MSBuild
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v2.0.0
 
-    # 2. إعداد CMake و Ninja
-    - name: Setup CMake and Ninja
-      uses: lukka/get-cmake@latest
-
-    # 3. تهيئة وبناء مشروع C++
-    - name: Configure and Build DLL
+    # 2. البحث عن ملف .sln أو .vcxproj وبناؤه تلقائياً
+    - name: Build Solution
       run: |
-        cmake -S . -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
-        cmake --build build --config Release
+        Get-ChildItem -Include *.sln, *.vcxproj -Recurse | ForEach-Object {
+          msbuild $_.FullName /p:Configuration=Release /p:Platform=x64
+        }
+      shell: powershell
 
-    # 4. استخراج ورفع ملف الـ DLL أو الـ EXE الناتج
+    # 3. رفع الملفات الناتجة (DLL/EXE)
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4.4.3
       with:
         name: VapeV4-Compiled
         path: |
-          build/**/*.dll
-          build/**/*.exe
+          **/*.dll
+          **/*.exe
